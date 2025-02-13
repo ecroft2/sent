@@ -3,24 +3,24 @@ import { useState, useEffect } from "react";
 import useValidateEmail from "../hooks/useValidateEmail";
 
 const EmailInput = (props) => {
-    const [fieldValue, setFieldValue] = useState("");
-    const { validationStatus, validateField } = useValidateEmail();
+    const [value, setValue] = useState("");
+    const [hasInteracted, setHasInteracted] = useState(false);
 
-    const onFieldValueChange = (event) => {
-        const newValue = event.target.value;
-        setFieldValue(newValue);
-        validateField(newValue);
-    };
+    const { validationResponse, validateInput } = useValidateEmail(
+        props.required
+    );
 
     useEffect(() => {
-        if (validationStatus) {
-            props.onValidation(
-                Object.values(validationStatus).every(
-                    (requirement) => requirement === true
-                )
-            );
+        if (hasInteracted) {
+            validateInput(value);
         }
-    }, [props, validationStatus]);
+    }, [value, validateInput, hasInteracted]);
+
+    useEffect(() => {
+        if (validationResponse) {
+            props.isValid(validationResponse.isValid);
+        }
+    }, [props, validationResponse]);
 
     return (
         <div>
@@ -29,11 +29,23 @@ const EmailInput = (props) => {
             <input
                 id={props.id}
                 name={props.name}
-                onChange={onFieldValueChange}
+                onChange={(event) => {
+                    setValue(event.target.value);
+                }}
+                onBlur={(event) => {
+                    validateInput(event.target.value);
+                    setHasInteracted(true);
+                }}
                 required={props.required}
                 type="email"
-                value={fieldValue}
+                value={value}
             ></input>
+
+            {validationResponse?.errorType === "required_field" &&
+                "This field is required."}
+
+            {validationResponse?.errorType === "invalid_format" &&
+                "This field is in the incorrect format."}
         </div>
     );
 };
