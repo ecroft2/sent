@@ -1,29 +1,41 @@
 import { useState, Fragment, useEffect } from "react";
 
-import useValidatePassword from "../hooks/useValidatePassword";
+import useValidatePassword from "../hooks/useClientValidatePassword";
 import "../../firebase";
 
-const PasswordInput = (props) => {
-    const [fieldValue, setFieldValue] = useState("");
+const PasswordInput = ({
+    fieldValidationStatus,
+    id,
+    name,
+    serverValidationStatus,
+}) => {
+    const [value, setValue] = useState("");
     const [passwordIsVisible, setPasswordIsVisible] = useState(false);
 
-    const { validationStatus, validateField } = useValidatePassword();
-
-    const onPasswordChange = (event) => {
-        const newPassword = event.target.value;
-        setFieldValue(newPassword);
-        validateField(newPassword);
-    };
+    const { validationStatus: clientValidationStatus, validateInput } =
+        useValidatePassword();
 
     useEffect(() => {
-        if (validationStatus) {
-            props.onValidation(
-                Object.values(validationStatus).every(
-                    (requirement) => requirement === true
-                )
-            );
+        validateInput(value);
+    }, [value, validateInput]);
+
+    useEffect(() => {
+        if (fieldValidationStatus) {
+            fieldValidationStatus({
+                field: "password",
+                error:
+                    serverValidationStatus?.error === true ||
+                    clientValidationStatus?.error === true,
+            });
         }
-    }, [props, validationStatus]);
+    }, [fieldValidationStatus, serverValidationStatus, clientValidationStatus]);
+
+    const isPasswordRequirementMet = (errorKey) => {
+        return (
+            clientValidationStatus?.error === false ||
+            clientValidationStatus?.errorCode?.includes(errorKey) === false
+        );
+    };
 
     return (
         <Fragment>
@@ -33,9 +45,11 @@ const PasswordInput = (props) => {
                 <ul>
                     <li
                         style={{
-                            color:
-                                validationStatus?.meetsMinPasswordLength &&
-                                "green",
+                            color: isPasswordRequirementMet(
+                                "meetsMinPasswordLength"
+                            )
+                                ? "green"
+                                : "inherit",
                         }}
                     >
                         At least 12 characters
@@ -43,27 +57,36 @@ const PasswordInput = (props) => {
                     <li
                         style={{
                             color:
-                                validationStatus?.containsUppercaseLetter &&
-                                validationStatus?.containsLowercaseLetter &&
-                                "green",
+                                isPasswordRequirementMet(
+                                    "containsUppercaseLetter"
+                                ) &&
+                                isPasswordRequirementMet(
+                                    "containsLowercaseLetter"
+                                )
+                                    ? "green"
+                                    : "inherit",
                         }}
                     >
                         Uppercase and lowercase characters
                     </li>
                     <li
                         style={{
-                            color:
-                                validationStatus?.containsNumericCharacter &&
-                                "green",
+                            color: isPasswordRequirementMet(
+                                "containsNumericCharacter"
+                            )
+                                ? "green"
+                                : "inherit",
                         }}
                     >
                         At least one number
                     </li>
                     <li
                         style={{
-                            color:
-                                validationStatus?.containsNonAlphanumericCharacter &&
-                                "green",
+                            color: isPasswordRequirementMet(
+                                "containsNonAlphanumericCharacter"
+                            )
+                                ? "green"
+                                : "inherit",
                         }}
                     >
                         At least one special character
@@ -71,7 +94,7 @@ const PasswordInput = (props) => {
                 </ul>
             </div>
 
-            <label htmlFor={props.id}>
+            <label htmlFor={id}>
                 Password
                 <button
                     type="button"
@@ -82,13 +105,23 @@ const PasswordInput = (props) => {
             </label>
 
             <input
-                id={props.id}
-                name={props.name}
-                onChange={onPasswordChange}
+                id={id}
+                name={name}
+                onChange={(event) => setValue(event.target.value)}
+                onBlur={(event) => {
+                    validateInput(event.target.value);
+                }}
                 required
                 type={passwordIsVisible ? "text" : "password"}
-                value={fieldValue}
+                value={value}
             ></input>
+
+            {serverValidationStatus?.errorCode ===
+                "auth/password-does-not-meet-requirements" &&
+                "Check the requirements for the password and try again."}
+
+            {serverValidationStatus?.errorCode === "auth/missing-password" &&
+                "Password is required."}
         </Fragment>
     );
 };
