@@ -1,25 +1,19 @@
 import "../firebase";
 
 import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useState, useCallback } from "react";
 import PasswordInput from "./components/PasswordInput";
 import EmailInput from "./components/EmailInput";
 
 const Form = () => {
     const auth = getAuth();
 
-    const onFieldValidation = (field, status) => {
-        setFieldValidation((prevState) => {
-            if (prevState[field] !== status) {
-                return {
-                    ...prevState,
-                    [field]: status,
-                };
-            }
+    const [serverValidationStatus, setServerValidationStatus] = useState({
+        error: false,
+        errorCode: null,
+    });
 
-            return prevState;
-        });
-    };
+    const [formValidation, setFormValidation] = useState({});
 
     const onFormSubmit = (event) => {
         event.preventDefault();
@@ -30,34 +24,36 @@ const Form = () => {
         createUserWithEmailAndPassword(auth, email, password)
             .then((userCredential) => {
                 // Signed up
+                setServerValidationStatus({
+                    error: false,
+                    errorCode: null,
+                });
+
                 const user = userCredential.user;
                 console.log(user);
-                // ...
             })
             .catch((error) => {
-                const errorCode = error.code;
-
-                if (errorCode === "auth/password-does-not-meet-requirements") {
-                    setErrorMessage(
-                        "Check the requirements for the password and try again."
-                    );
-                }
+                setServerValidationStatus({
+                    error: true,
+                    errorCode: error.code,
+                });
             });
     };
 
-    const [errorMessage, setErrorMessage] = useState(false);
-    const [enableFormSubmit, setEnableFormSubmit] = useState(false);
+    const onFieldValidation = useCallback(({ field, error }) => {
+        setFormValidation((prevState) => {
+            if (prevState[field]?.error === error) {
+                return prevState;
+            }
 
-    const [fieldValidation, setFieldValidation] = useState({
-        email: false,
-        password: false,
-    });
-
-    useEffect(() => {
-        setEnableFormSubmit(
-            Object.values(fieldValidation).every((field) => field === true)
-        );
-    }, [fieldValidation]);
+            return {
+                ...prevState,
+                [field]: {
+                    error,
+                },
+            };
+        });
+    }, []);
 
     return (
         <Fragment>
@@ -65,22 +61,29 @@ const Form = () => {
                 <EmailInput
                     name="email"
                     id="email"
-                    onValidation={(status) =>
-                        onFieldValidation("email", status)
-                    }
+                    serverValidationStatus={serverValidationStatus}
+                    fieldValidationStatus={onFieldValidation}
+                    required
                 />
 
                 <PasswordInput
                     name="password"
                     id="password"
-                    onValidation={(status) =>
-                        onFieldValidation("password", status)
-                    }
+                    serverValidationStatus={serverValidationStatus}
+                    fieldValidationStatus={onFieldValidation}
+                    required
                 />
 
-                {errorMessage ? <p>{errorMessage}</p> : ""}
-
-                <button disabled={!enableFormSubmit} type="submit">
+                <button
+                    disabled={
+                        formValidation
+                            ? Object.values(formValidation).some(
+                                  (field) => field.error === true
+                              )
+                            : false
+                    }
+                    type="submit"
+                >
                     Submit
                 </button>
             </form>
