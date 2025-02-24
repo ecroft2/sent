@@ -1,7 +1,15 @@
-import Form from "./Form";
+import { useState, Fragment } from "react";
+import Register from "./forms/Register/Register";
 
 function App() {
-    return <Form />;
+    const [user, setUser] = useState(false);
+
+    return (
+        <Fragment>
+            <p>{user ? user.email : "No user"}</p>
+            <Register user={(user) => setUser(user)} />
+        </Fragment>
+    );
 }
 
 export default App;
