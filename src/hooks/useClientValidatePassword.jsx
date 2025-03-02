@@ -5,7 +5,6 @@ import "../../firebase";
 
 const useValidatePassword = () => {
     const [validationStatus, setValidationStatus] = useState({
-        error: null,
         errorCode: null,
     });
 
@@ -31,7 +30,6 @@ const useValidatePassword = () => {
         );
 
         const status = {
-            error: errors.length > 0,
             errorCode: errors.length > 0 ? errors : false,
         };
 

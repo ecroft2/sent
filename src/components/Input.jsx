@@ -9,6 +9,8 @@ const Input = ({
     serverValidationStatus,
     type,
     validationMessages,
+    validateOnChange,
+    validateOnBlur,
     validator,
 }) => {
     const [value, setValue] = useState("");
@@ -24,6 +26,8 @@ const Input = ({
     }, [value, validateInput, enableValidation]);
 
     useEffect(() => {
+        console.log(id, clientValidationStatus, serverValidationStatus);
+
         fieldValidationStatus({
             field: id,
             error:
@@ -49,8 +53,25 @@ const Input = ({
                 id={id}
                 name={name}
                 onChange={(event) => {
-                    setEnableValidation(true);
                     setValue(event.target.value);
+
+                    if (validateOnBlur) {
+                        !(
+                            clientValidationStatus?.errorCode ||
+                            serverValidationStatus?.errorCode
+                        ) && setEnableValidation(false);
+                    }
+
+                    if (validateOnChange) {
+                        setEnableValidation(true);
+                    }
+                }}
+                onBlur={(event) => {
+                    setValue(event.target.value);
+
+                    if (validateOnBlur) {
+                        setEnableValidation(true);
+                    }
                 }}
                 required={required}
                 type={type}

@@ -107,6 +107,7 @@ const PasswordInput = ({
                 value={value}
                 validator={useValidatePassword}
                 fieldValidationStatus={onFieldValidationStatus}
+                validateOnChange={true}
                 validationMessages={{
                     "auth/password-does-not-meet-requirements":
                         "Check the requirements for the password and try again.",

@@ -1,7 +1,7 @@
 import "../../../firebase";
 
 import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
-import { Fragment, useState, useCallback, useEffect } from "react";
+import { Fragment, useState, useCallback } from "react";
 import PasswordInput from "../../components/PasswordInput";
 import Input from "../../components/Input";
 
@@ -16,10 +16,6 @@ const RegisterEmailPwd = (props) => {
     });
 
     const [formValidation, setFormValidation] = useState({});
-
-    useEffect(() => {
-        console.log(formValidation);
-    }, [formValidation]);
 
     const onFormSubmit = (event) => {
         event.preventDefault();
@@ -71,6 +67,7 @@ const RegisterEmailPwd = (props) => {
                     validator={useClientValidateEmail}
                     required={true}
                     serverValidationStatus={serverValidationStatus}
+                    validateOnBlur={true}
                     fieldValidationStatus={onFieldValidation}
                     validationMessages={{
                         "auth/missing-email": "Email is required.",
