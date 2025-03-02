@@ -1,46 +1,48 @@
-import { useState, Fragment, useEffect } from "react";
-
+import { useState, Fragment } from "react";
 import useValidatePassword from "../hooks/useClientValidatePassword";
+import Input from "./Input"; // Reuse Input for the actual input field
 import "../../firebase";
 
 const PasswordInput = ({
+    serverValidationStatus,
     fieldValidationStatus,
+    label,
     id,
     name,
-    serverValidationStatus,
+    required,
+    value,
 }) => {
-    const [value, setValue] = useState("");
     const [passwordIsVisible, setPasswordIsVisible] = useState(false);
 
-    const { validationStatus: clientValidationStatus, validateInput } =
-        useValidatePassword();
+    const [passwordValidationStatus, setPasswordValidationStatus] =
+        useState(false);
 
-    useEffect(() => {
-        validateInput(value);
-    }, [value, validateInput]);
+    const onFieldValidationStatus = (status) => {
+        setPasswordValidationStatus((prevState) =>
+            JSON.stringify(prevState) === JSON.stringify(status)
+                ? prevState
+                : status
+        );
 
-    useEffect(() => {
-        if (fieldValidationStatus) {
-            fieldValidationStatus({
-                field: "password",
-                error:
-                    serverValidationStatus?.error === true ||
-                    clientValidationStatus?.error === true,
-            });
-        }
-    }, [fieldValidationStatus, serverValidationStatus, clientValidationStatus]);
+        fieldValidationStatus(status);
+    };
 
     const isPasswordRequirementMet = (errorKey) => {
-        return (
-            clientValidationStatus?.error === false ||
-            clientValidationStatus?.errorCode?.includes(errorKey) === false
-        );
+        if (passwordValidationStatus.error !== null) {
+            if (passwordValidationStatus.error) {
+                return (
+                    passwordValidationStatus.error.includes(errorKey) === false
+                );
+            } else {
+                return true;
+            }
+        }
     };
 
     return (
         <Fragment>
             <div>
-                <p>Password must contain</p>
+                <p>Password must contain:</p>
 
                 <ul>
                     <li
@@ -94,34 +96,30 @@ const PasswordInput = ({
                 </ul>
             </div>
 
-            <label htmlFor={id}>
-                Password
-                <button
-                    type="button"
-                    onClick={() => setPasswordIsVisible(!passwordIsVisible)}
-                >
-                    Toggle password
-                </button>
-            </label>
+            <label htmlFor={id}>{label}</label>
 
-            <input
+            <Input
                 id={id}
                 name={name}
-                onChange={(event) => setValue(event.target.value)}
-                onBlur={(event) => {
-                    validateInput(event.target.value);
-                }}
-                required
+                required={required}
                 type={passwordIsVisible ? "text" : "password"}
+                serverValidationStatus={serverValidationStatus}
                 value={value}
-            ></input>
+                validator={useValidatePassword}
+                fieldValidationStatus={onFieldValidationStatus}
+                validationMessages={{
+                    "auth/password-does-not-meet-requirements":
+                        "Check the requirements for the password and try again.",
+                    "auth/missing-password": "Password is required.",
+                }}
+            />
 
-            {serverValidationStatus?.errorCode ===
-                "auth/password-does-not-meet-requirements" &&
-                "Check the requirements for the password and try again."}
-
-            {serverValidationStatus?.errorCode === "auth/missing-password" &&
-                "Password is required."}
+            <button
+                type="button"
+                onClick={() => setPasswordIsVisible(!passwordIsVisible)}
+            >
+                {passwordIsVisible ? "Hide password" : "Show password"}
+            </button>
         </Fragment>
     );
 };

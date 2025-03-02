@@ -12,37 +12,24 @@ const Input = ({
     validator,
 }) => {
     const [value, setValue] = useState("");
-    const [hasInteracted, setHasInteracted] = useState(false);
+    const [enableValidation, setEnableValidation] = useState(false);
 
     const { validationStatus: clientValidationStatus, validateInput } =
         validator(required);
 
     useEffect(() => {
-        if (hasInteracted) {
-            if (
-                serverValidationStatus?.error === true ||
-                clientValidationStatus?.error === true
-            ) {
-                validateInput(value);
-            }
+        if (enableValidation) {
+            validateInput(value);
         }
-    }, [
-        value,
-        validateInput,
-        hasInteracted,
-        serverValidationStatus,
-        clientValidationStatus,
-    ]);
+    }, [value, validateInput, enableValidation]);
 
     useEffect(() => {
-        if (fieldValidationStatus) {
-            fieldValidationStatus({
-                field: id,
-                validation:
-                    serverValidationStatus?.errorCode ||
-                    clientValidationStatus?.errorCode,
-            });
-        }
+        fieldValidationStatus({
+            field: id,
+            error:
+                serverValidationStatus?.errorCode ||
+                clientValidationStatus?.errorCode,
+        });
     }, [
         id,
         fieldValidationStatus,
@@ -62,11 +49,8 @@ const Input = ({
                 id={id}
                 name={name}
                 onChange={(event) => {
+                    setEnableValidation(true);
                     setValue(event.target.value);
-                }}
-                onBlur={(event) => {
-                    setHasInteracted(true);
-                    validateInput(event.target.value);
                 }}
                 required={required}
                 type={type}

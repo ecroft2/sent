@@ -4,7 +4,10 @@ import { getAuth, validatePassword } from "firebase/auth";
 import "../../firebase";
 
 const useValidatePassword = () => {
-    const [validationStatus, setValidationStatus] = useState(null);
+    const [validationStatus, setValidationStatus] = useState({
+        error: null,
+        errorCode: null,
+    });
 
     const validate = useCallback(async (password) => {
         const {
@@ -29,7 +32,7 @@ const useValidatePassword = () => {
 
         const status = {
             error: errors.length > 0,
-            errorCode: errors.length > 0 ? errors : null,
+            errorCode: errors.length > 0 ? errors : false,
         };
 
         setValidationStatus((prevState) =>
